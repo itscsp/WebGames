@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn WebSocket</title>
+</head>
+<body>
+    <h1>Ball Game</h1>
+    <button id = 'btnCreate' >New Game</button>
+    <button id = 'btnJoin' >Join Game</button>
+    <input type="text" id = "txtGameId" />
+
+    <script>
+         let clientId = null
+         let gameId = null
+         let ws = new WebSocket('ws://localhost:8080');
+
+        //HTML elements
+        const btnCreate = document.getElementById("btnCreate");
+        const btnJoin = document.getElementById("btnJoin");
+        const inputGameId = document.getElementById("txtGameId");
+
+        
+        /**
+         *  Wiring event
+        */
+
+        // Event Join
+        btnJoin.addEventListener("click", e => {
+            if(gameId === null)
+                gameId = inputGameId.value
+
+            
+            const payLoad = {
+                "method": "join",
+                "clientId": clientId,
+                "gameId": gameId
+            }
+
+            ws.send(JSON.stringify(payLoad));
+        })
+
+        // Event Create
+        btnCreate.addEventListener("click", e => {
+            const payLoad = {
+                "method": "create",
+                "clientId": clientId
+            }
+
+            ws.send(JSON.stringify(payLoad));
+        })
+
+        // Web Socket Events
+        ws.onmessage = message => {
+            //message.data
+            const response = JSON.parse(message.data);
+
+            // console.log(response);
+
+            // # CONNECT
+            if(response.method === "connect") {
+                clientId = response.clientId;
+                console.log("Client id Set successfully " + clientId)
+            }
+
+            // # CREATE
+            if(response.method === "create") {
+                gameId = response.game.id;
+                console.log("Game successfully created with id " + gameId + " with " + response.game.balls + "balls")
+            }
+        }
+    </script>
+</body>
+</html>
