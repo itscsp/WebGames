@@ -58,8 +58,9 @@ wsServer.on("request", request => {
             const clientId = result.clientId;
             const gameId = result.gameId;
             const game = games[gameId];
-            if(game.clients.langth >= 3) {
-                // Return if player is more than 3
+            if (game.clients.length >= 3) 
+            {
+                //sorry max players reach
                 return;
             }
 
@@ -74,6 +75,10 @@ wsServer.on("request", request => {
                 "color": colorCode[game.clients.length]
             })
 
+            //Start update game state
+            if(game.clients.length === 3) updateGameState();
+        
+
             const payLoad = {
                 "method":'join',
                 "game": game
@@ -84,6 +89,21 @@ wsServer.on("request", request => {
                 clients[client.clientId].connection.send(JSON.stringify(payLoad))
             })
 
+        }
+
+        // # PLAY
+        if(result.method === 'play'){
+          
+            const gameId = result.gameId;
+            const ballId = result.ballId
+            const color = result.color;
+
+            let state = games[gameId].state;
+            if (!state) state = {}
+
+            state[ballId] = color;
+            games[gameId].state = state;
+            updateGameState()
         }
     });
 
@@ -103,6 +123,20 @@ wsServer.on("request", request => {
 
  })
 
+function updateGameState() {
+    for(const g of Object.keys(games)) {
+        const game = games[g]
+        const payLoad = {
+            "method": "update",
+            "game": game
+        }
+
+        game.clients.forEach(c=> {
+            clients[c.clientId].connection.send(JSON.stringify(payLoad))
+        })
+    }
+    setTimeout(updateGameState, 500)
+ }
 
 // Following code will generate guid
 function S4() {
